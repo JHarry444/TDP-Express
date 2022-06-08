@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const nameRouter = require('./routes/names');
+const trainerRouter = require('./routes/trainers');
 
 app.use(cors());
 app.use(bodyParser.json()); // converts the request body from JSON (res => res.json())
@@ -24,12 +25,13 @@ app.get('/greeting', (req, res) => {
 });
 
 app.use('/names', nameRouter);
+app.use('/trainers', trainerRouter);
 
 app.use('*', (req, res, next) => next({ status: 404, message: 'Invalid url' })); // catches 404's
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  res.status(err.status).send(err.message);
+  res.status(err.status ? err.status : 500).send(err.message);
 });
 
 const server = app.listen(4494, () => {
