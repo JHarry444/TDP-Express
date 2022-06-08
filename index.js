@@ -7,12 +7,14 @@ const cors = require('cors');
 app.use(cors());
 app.use(bodyParser.json()); // converts the request body from JSON (res => res.json())
 
+const { checkContentType, checkMethods } = require('./validation');
+
 app.use((req, res, next) => {
-  const logEntry = `host: ${req.host}
-    ip: ${req.ip}
-    method: ${req.method}
-    path: ${req.path}
-    time: ${new Date()}`;
+  const logEntry = `host: ${req.headers.host}
+ip: ${req.ip}
+method: ${req.method}
+path: ${req.path}
+time: ${new Date()}`;
   console.log(logEntry);
   next();
 });
@@ -23,30 +25,32 @@ app.get('/greeting', (req, res) => {
   res.send('Hello, World!');
 });
 
-app.get('/readAll', (req, res) => res.send(names));
+app.use('/readAll', checkMethods(['GET']), (req, res) => res.send(names));
 
-app.get('/read/:id', (req, res, next) => {
+app.use('/read/:id', checkMethods(['GET']), (req, res, next) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id) || id < 0 || id >= names.length) return next({ status: 400, message: 'Invalid id' });
   return res.send(names[id]);
 });
 
-app.post('/create', (req, res) => {
+app.use('/create', checkMethods(['POST']), checkContentType(['application/json']), (req, res, next) => {
   const newName = req.body.name;
+  if (!req.body || !req.body.name) return next({ status: 400, message: 'Missing name!' });
   names.push(newName);
-  res.status(201).send(`Successfully added ${names[names.length - 1]}`);
+  return res.status(201).send(`Successfully added ${names[names.length - 1]}`);
 });
 
-app.put('/update/:id', (req, res, next) => {
+app.use('/update/:id', checkMethods(['PUT']), (req, res, next) => {
   const id = parseInt(req.params.id, 10);
-  const newName = req.query.name;
   if (Number.isNaN(id) || id < 0 || id >= names.length) return next({ status: 400, message: 'Invalid id' });
+  const newName = req.query.name;
+  if (!req.query.name) return next({ status: 400, message: 'Missing name!' });
   const oldName = names[id];
   names.splice(id, 1, newName);
   return res.send(`Replaced ${oldName} with ${names[id]}`);
 });
 
-app.delete('/remove/:id', (req, res, next) => {
+app.use('/remove/:id', checkMethods(['DELETE']), (req, res, next) => {
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id) || id < 0 || id >= names.length) return next({ status: 400, message: 'Invalid id' });
   names.splice(id, 1);
