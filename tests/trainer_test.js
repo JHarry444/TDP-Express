@@ -38,6 +38,34 @@ mocha.describe('CRUD testing', () => {
       done();
     });
   });
+
+  mocha.it('should find a trainer', (done) => {
+    chai.request(server).get(`/trainers/read/${id}`).end((err, res) => {
+      chai.expect(err).to.be.null;
+      chai.expect(res.body).to.include({
+        _id: id.toString(),
+        name: 'JH',
+        age: 28,
+        specialism: 'Shenanigans',
+      });
+      return done();
+    });
+  });
+
+  mocha.it('should find all the trainers', (done) => {
+    chai.request(server).get('/trainers/readAll').end((err, res) => {
+      chai.expect(err).to.be.null;
+      chai.expect(res.body).to.have.lengthOf(1);
+      chai.expect(res.body[0]).to.include({
+        _id: id.toString(),
+        name: 'JH',
+        age: 28,
+        specialism: 'Shenanigans',
+      });
+      return done();
+    });
+  });
+
   mocha.it('should update a trainer', (done) => {
     chai.request(server).put(`/trainers/update/${id}`).send({
       name: 'Ed',
@@ -52,6 +80,14 @@ mocha.describe('CRUD testing', () => {
         specialism: 'Shenanigans',
       });
       done();
+    });
+  });
+
+  mocha.it('should remove a trainer', (done) => {
+    chai.request(server).delete(`/trainers/remove/${id}`).end((err, res) => {
+      chai.expect(err).to.be.null;
+      chai.expect(res.status).to.equal(204);
+      return done();
     });
   });
 });
